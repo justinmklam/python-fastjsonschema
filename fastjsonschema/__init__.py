@@ -80,7 +80,7 @@ from functools import partial, update_wrapper
 from .draft04 import CodeGeneratorDraft04
 from .draft06 import CodeGeneratorDraft06
 from .draft07 import CodeGeneratorDraft07
-from .exceptions import JsonSchemaException, JsonSchemaValueException, JsonSchemaDefinitionException
+from .exceptions import JsonSchemaException, JsonSchemaValueException, JsonSchemaDefinitionException, JsonSchemaMultipleValueException
 from .ref_resolver import RefResolver
 from .version import VERSION
 
@@ -89,6 +89,7 @@ __all__ = (
     'JsonSchemaException',
     'JsonSchemaValueException',
     'JsonSchemaDefinitionException',
+    'JsonSchemaMultipleValueException',
     'validate',
     'compile',
     'compile_to_code',

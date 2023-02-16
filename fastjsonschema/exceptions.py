@@ -49,3 +49,17 @@ class JsonSchemaDefinitionException(JsonSchemaException):
     """
     Exception raised by generator of validation function.
     """
+
+
+class JsonSchemaMultipleValueException(JsonSchemaException):
+    """
+    Exception raised by validation function when lazy validation is enabled.
+
+    Available properties:
+
+     * ``message`` containing a human-readable message about how many schema errors were encountered,
+     * ``errors`` as an array containing all schema errors (as ``JsonSchemaValueException`` objects)
+    """
+    def __init__(self, message, errors):
+        super().__init__(message)
+        self.errors = errors

@@ -97,13 +97,13 @@ class CodeGenerator:
 
         if not self._compile_regexps:
             return '\n'.join(self._extra_imports_lines + [
-                'from fastjsonschema import JsonSchemaValueException',
+                'from fastjsonschema import JsonSchemaValueException, JsonSchemaMultipleValueException',
                 '',
                 '',
             ])
         return '\n'.join(self._extra_imports_lines + [
             'import re',
-            'from fastjsonschema import JsonSchemaValueException',
+            'from fastjsonschema import JsonSchemaValueException, JsonSchemaMultipleValueException',
             '',
             '',
             'REGEX_PATTERNS = ' + serialize_regexes(self._compile_regexps),
@@ -136,8 +136,12 @@ class CodeGenerator:
         self._validation_functions_done.add(uri)
         self.l('')
         with self._resolver.resolving(uri) as definition:
-            with self.l('def {}(data, custom_formats={{}}, name_prefix=None):', name):
+            with self.l('def {}(data, custom_formats={{}}, name_prefix=None, lazy=False):', name):
+                self.l("if lazy: errors = []")
                 self.generate_func_code_block(definition, 'data', 'data', clear_variables=True)
+
+                with self.l("if lazy and errors:"):
+                    self.l("raise JsonSchemaMultipleValueException(\"Encountered \" + str(len(errors)) + \" schema errors\", errors)")
                 self.l('return data')
 
     def generate_func_code_block(self, definition, variable, variable_name, clear_variables=False):
@@ -264,10 +268,14 @@ class CodeGenerator:
         arg = '"'+msg+'"'
         if append_to_msg:
             arg += ' + (' + append_to_msg + ')'
-        msg = 'raise JsonSchemaValueException('+arg+', value={variable}, name="{name}", definition={definition}, rule={rule})'
+        msg = 'error = JsonSchemaValueException('+arg+', value={variable}, name="{name}", definition={definition}, rule={rule})'
         definition = self._expand_refs(self._definition)
         definition_rule = self.e(definition.get(rule) if isinstance(definition, dict) else None)
         self.l(msg, *args, definition=repr(definition), rule=repr(rule), definition_rule=definition_rule)
+        with self.l("if lazy:", *args):
+            self.l("errors.append(error)", *args)
+        with self.l("else:", *args):
+            self.l("raise error", *args)
 
     def _expand_refs(self, definition):
         if isinstance(definition, list):
